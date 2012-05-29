@@ -1,6 +1,8 @@
 script: 'ci/travis.rb'
 before_install:
   - gem install bundler
+after_install:
+  - cat Gemfile.lock
 rvm:
   - 1.9.3
 env:
