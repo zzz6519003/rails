@@ -45,10 +45,16 @@ module ActionController
     end
 
     def process(name)
-      t = Thread.new {
-        super(name)
-        @_response.release!
+      Thread.new {
+        Thread.current.abort_on_exception = true
+
+        begin
+          super(name)
+        ensure
+          @_response.release!
+        end
       }
+
       @_response.await_write
     end
 
