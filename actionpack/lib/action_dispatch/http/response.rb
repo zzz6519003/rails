@@ -68,6 +68,7 @@ module ActionDispatch # :nodoc:
 
       @sending_file = false
       @blank = false
+      @latch  = ActiveSupport::Concurrency::Latch.new
 
       if content_type = self[CONTENT_TYPE]
         type, charset = content_type.split(/;\s*charset=/)
@@ -78,6 +79,14 @@ module ActionDispatch # :nodoc:
       prepare_cache_control!
 
       yield self if block_given?
+    end
+
+    def await_write
+      @latch.await
+    end
+
+    def release!
+      @latch.release
     end
 
     def status=(status)
