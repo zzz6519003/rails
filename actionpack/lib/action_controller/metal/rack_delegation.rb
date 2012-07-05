@@ -18,7 +18,6 @@ module ActionController
 
         def write(string)
           @response.headers['Cache-Control'] = 'no-cache'
-          @response.headers['Transver-Encoding'] = 'chunked'
           @response.headers.delete 'Content-Length'
           @response.release!
           @buf.push string
