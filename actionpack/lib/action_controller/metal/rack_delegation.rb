@@ -17,6 +17,9 @@ module ActionController
         end
 
         def write(string)
+          @response.headers['Cache-Control'] = 'no-cache'
+          @response.headers['Transver-Encoding'] = 'chunked'
+          @response.headers.delete 'Content-Length'
           @response.release!
           @buf.push string
         end
@@ -33,9 +36,11 @@ module ActionController
         end
       end
 
+      attr_reader :stream
+
       def initialize(status = 200, header = {}, body = [])
-        #buffer = Buffer.new self
-        super(status, header, body)
+        @stream = Buffer.new self
+        super(status, header, stream)
       end
     end
 
@@ -70,8 +75,7 @@ module ActionController
     private
 
     def set_response!(request)
-      @_response         = ActionDispatch::Response.new
-      #@_response         = AsyncResponse.new
+      @_response         = AsyncResponse.new
       @_response.request = request
     end
   end
