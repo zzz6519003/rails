@@ -49,8 +49,13 @@ module ActionController
     end
 
     def process(name)
+      t1 = Thread.current
+      locals = t1.keys.map { |key| [key, t1[key]] }
+
       Thread.new {
-        Thread.current.abort_on_exception = true
+        t2 = Thread.current
+        t2.abort_on_exception = true
+        locals.each { |k,v| t2[k] = v }
 
         begin
           super(name)
