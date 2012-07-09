@@ -1,6 +1,5 @@
 require 'action_dispatch/http/request'
 require 'action_dispatch/http/response'
-require 'active_support/concurrency/latch'
 
 module ActionController
   module RackDelegation
@@ -13,7 +12,7 @@ module ActionController
       class Buffer
         def initialize(response)
           @response = response
-          @buf = Queue.new
+          @buf      = Queue.new
         end
 
         def write(string)

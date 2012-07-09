@@ -226,7 +226,7 @@ module ActionController
       @block = nil
       @length = 0
       @body = []
-      @latch = ActiveSupport::Concurrency::Latch.new
+      @written = false
       @charset = @content_type = nil
       @request = @template = nil
     end
