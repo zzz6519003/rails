@@ -63,15 +63,17 @@ module ActionDispatch # :nodoc:
 
     include Rack::Response::Helpers
     include ActionDispatch::Http::Cache::Response
+    include MonitorMixin
 
     def initialize(status = 200, header = {}, body = [])
+      super()
+
       self.body, self.header, self.status = body, header, status
 
       @sending_file = false
       @blank        = false
-      @lock         = Monitor.new
-      @cv           = @lock.new_cond
-      @written      = false
+      @cv           = new_cond
+      @committed    = false
 
       if content_type = self[CONTENT_TYPE]
         type, charset = content_type.split(/;\s*charset=/)
@@ -84,17 +86,21 @@ module ActionDispatch # :nodoc:
       yield self if block_given?
     end
 
-    def await_write
-      @lock.synchronize do
-        @cv.wait_while { ! @written }
+    def await_commit
+      synchronize do
+        @cv.wait_until { @committed }
       end
     end
 
-    def release!
-      @lock.synchronize do
-        @written = true
+    def commit!
+      synchronize do
+        @committed = true
         @cv.broadcast
       end
+    end
+
+    def committed?
+      synchronize { @committed }
     end
 
     def status=(status)

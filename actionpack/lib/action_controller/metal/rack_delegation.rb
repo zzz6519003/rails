@@ -18,7 +18,7 @@ module ActionController
         def write(string)
           @response.headers['Cache-Control'] = 'no-cache'
           @response.headers.delete 'Content-Length'
-          @response.release!
+          @response.commit!
           @buf.push string
         end
 
@@ -29,7 +29,7 @@ module ActionController
         end
 
         def close
-          @response.release!
+          @response.commit!
           @buf.push nil
         end
       end
@@ -59,11 +59,11 @@ module ActionController
         begin
           super(name)
         ensure
-          @_response.release!
+          @_response.commit!
         end
       }
 
-      @_response.await_write
+      @_response.await_commit
     end
 
     def response_body=(body)
