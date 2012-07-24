@@ -160,6 +160,16 @@ module ActionView
       #   completion of the Ajax request and performing JavaScript operations once
       #   they're complete
       #
+      # ==== Data attributes
+      #
+      # * <tt>:confirm => 'question?'</tt> - This will allow the unobtrusive JavaScript
+      #   driver to prompt with the question specified. If the user accepts, the link is
+      #   processed normally, otherwise no action is taken.
+      # * <tt>:disable_with</tt> - Value of this parameter will be
+      #   used as the value for a disabled version of the submit
+      #   button when the form is submitted. This feature is provided
+      #   by the unobtrusive JavaScript driver.
+      #
       # ==== Examples
       # Because it relies on +url_for+, +link_to+ supports both older-style controller/action/id arguments
       # and newer RESTful routes. Current Rails style favors RESTful routes whenever possible, so base
@@ -274,6 +284,16 @@ module ActionView
       # * <tt>:form_class</tt> - This controls the class of the form within which the submit button will
       #   be placed
       #
+      # ==== Data attributes
+      #
+      # * <tt>:confirm</tt> - This will use the unobtrusive JavaScript driver to
+      #   prompt with the question specified. If the user accepts, the link is
+      #   processed normally, otherwise no action is taken.
+      # * <tt>:disable_with</tt> - Value of this parameter will be
+      #   used as the value for a disabled version of the submit
+      #   button when the form is submitted. This feature is provided
+      #   by the unobtrusive JavaScript driver.
+      #
       # ==== Examples
       #   <%= button_to "New", :action => "new" %>
       #   # => "<form method="post" action="/controller/new" class="button_to">
@@ -318,11 +338,11 @@ module ActionView
       #
       #
       #   <%= button_to('Destroy', 'http://www.example.com',
-      #             :method => "delete", :remote => true, :data => { :confirm' => 'Are you sure?' }) %>
+      #             :method => "delete", :remote => true, :data => { :confirm' => 'Are you sure?', :disable_with => 'loading...' }) %>
       #   # => "<form class='button_to' method='post' action='http://www.example.com' data-remote='true'>
       #   #       <div>
       #   #         <input name='_method' value='delete' type='hidden' />
-      #   #         <input value='Destroy' type='submit' data-confirm='Are you sure?' />
+      #   #         <input value='Destroy' type='submit' data-disable-with='loading...' data-confirm='Are you sure?' />
       #   #         <input name="authenticity_token" type="hidden" value="10f2163b45388899ad4d5ae948988266befcb6c3d1b2451cf657a0c293d605a6"/>
       #   #       </div>
       #   #     </form>"
@@ -623,9 +643,23 @@ module ActionView
             html_options = html_options.stringify_keys
             html_options['data-remote'] = 'true' if link_to_remote_options?(options) || link_to_remote_options?(html_options)
 
+            disable_with = html_options.delete("disable_with")
+            confirm = html_options.delete('confirm')
             method  = html_options.delete('method')
 
+            if confirm
+              ActiveSupport::Deprecation.warn ":confirm option is deprecated and will be removed from Rails 4.1. Use ':data => { :confirm => \'Text\' }' instead"
+
+              html_options["data-confirm"] = confirm
+            end
+
             add_method_to_attributes!(html_options, method) if method
+
+            if disable_with
+              ActiveSupport::Deprecation.warn ":disable_with option is deprecated and will be removed from Rails 4.1. Use ':data => { :disable_with => \'Text\' }' instead"
+
+              html_options["data-disable-with"] = disable_with
+            end
 
             html_options
           else

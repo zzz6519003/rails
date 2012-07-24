@@ -1,8 +1,10 @@
 ## Rails 4.0.0 (unreleased) ##
 
-*   Remove `:confirm` in favor of `:data => { :confirm => "Text" }` option for `button_to`, `button_tag`, `image_submit_tag`, `link_to` and `submit_tag` helpers.
+*   Remove ActionDispatch::Head middleware in favor of Rack::Head. *Santiago Pastorino*
 
-    *Carlos Galdino*
+*   Deprecate `:confirm` in favor of `:data => { :confirm => "Text" }` option for `button_to`, `button_tag`, `image_submit_tag`, `link_to` and `submit_tag` helpers.
+
+    *Carlos Galdino + Rafael Mendonça França*
 
 *   Show routes in exception page while debugging a `RoutingError` in development. *Richard Schneeman and Mattt Thompson*
 
@@ -95,7 +97,7 @@
 *   Templates without a handler extension now raises a deprecation warning but still
     defaults to ERb. In future releases, it will simply return the template contents. *Steve Klabnik*
 
-*   Remove `:disable_with` in favor of `'data-disable-with'` option from `submit_tag`, `button_tag` and `button_to` helpers.
+*   Deprecate `:disable_with` in favor of `:data => { :disable_with => "Text" }` option from `submit_tag`, `button_tag` and `button_to` helpers.
 
     *Carlos Galdino + Rafael Mendonça França*
 

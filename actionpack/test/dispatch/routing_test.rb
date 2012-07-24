@@ -482,9 +482,15 @@ class TestRoutingMapper < ActionDispatch::IntegrationTest
         get :preview, :on => :member
       end
 
-      resources :profiles, :param => :username do
+      resources :profiles, :param => :username, :username => /[a-z]+/ do
         get :details, :on => :member
         resources :messages
+      end
+
+      resources :orders do
+        constraints :download => /[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}/ do
+          resources :downloads, :param => :download, :shallow => true
+        end
       end
 
       scope :as => "routes" do
@@ -2241,6 +2247,23 @@ class TestRoutingMapper < ActionDispatch::IntegrationTest
     get '/profiles/bob/messages/34'
     assert_equal 'bob', @request.params[:profile_username]
     assert_equal '34', @request.params[:id]
+  end
+
+  def test_custom_param_constraint
+    get '/profiles/bob1'
+    assert_equal 404, @response.status
+
+    get '/profiles/bob1/details'
+    assert_equal 404, @response.status
+
+    get '/profiles/bob1/messages/34'
+    assert_equal 404, @response.status
+  end
+
+  def test_shallow_custom_param
+    get '/downloads/0c0c0b68-d24b-11e1-a861-001ff3fffe6f.zip'
+    assert_equal 'downloads#show', @response.body
+    assert_equal '0c0c0b68-d24b-11e1-a861-001ff3fffe6f', @request.params[:download]
   end
 
 private

@@ -917,7 +917,7 @@ module ActionDispatch
             @path       = (options[:path] || @name).to_s
             @controller = (options[:controller] || @name).to_s
             @as         = options[:as]
-            @param      = options[:param] || :id
+            @param      = (options[:param] || :id).to_sym
             @options    = options
           end
 
@@ -965,12 +965,18 @@ module ActionDispatch
             "#{path}/:#{param}"
           end
 
+          alias :shallow_scope :member_scope
+
           def new_scope(new_path)
             "#{path}/#{new_path}"
           end
 
+          def nested_param
+            :"#{singular}_#{param}"
+          end
+
           def nested_scope
-            "#{path}/:#{singular}_#{param}"
+            "#{path}/:#{nested_param}"
           end
 
         end
@@ -1481,18 +1487,18 @@ module ActionDispatch
           def nested_options #:nodoc:
             options = { :as => parent_resource.member_name }
             options[:constraints] = {
-              :"#{parent_resource.singular}_id" => id_constraint
-            } if id_constraint?
+              parent_resource.nested_param => param_constraint
+            } if param_constraint?
 
             options
           end
 
-          def id_constraint? #:nodoc:
-            @scope[:constraints] && @scope[:constraints][:id].is_a?(Regexp)
+          def param_constraint? #:nodoc:
+            @scope[:constraints] && @scope[:constraints][parent_resource.param].is_a?(Regexp)
           end
 
-          def id_constraint #:nodoc:
-            @scope[:constraints][:id]
+          def param_constraint #:nodoc:
+            @scope[:constraints][parent_resource.param]
           end
 
           def canonical_action?(action, flag) #:nodoc:
@@ -1505,7 +1511,7 @@ module ActionDispatch
 
           def path_for_action(action, path) #:nodoc:
             prefix = shallow_scoping? ?
-              "#{@scope[:shallow_path]}/#{parent_resource.path}/:id" : @scope[:path]
+              "#{@scope[:shallow_path]}/#{parent_resource.shallow_scope}" : @scope[:path]
 
             if canonical_action?(action, path.blank?)
               prefix.to_s
