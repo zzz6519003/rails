@@ -1,5 +1,36 @@
 ## Rails 4.0.0 (unreleased) ##
 
+*   `Model.all` now returns an `ActiveRecord::Relation`, rather than an
+    array of records. Use `Model.to_a` or `Relation#to_a` if you really
+    want an array.
+
+    In some specific cases, this may cause breakage when upgrading.
+    However in most cases the `ActiveRecord::Relation` will just act as a
+    lazy-loaded array and there will be no problems.
+
+    Note that calling `Model.all` with options (e.g.
+    `Model.all(conditions: '...')` was already deprecated, but it will
+    still return an array in order to make the transition easier.
+
+    `Model.scoped` is deprecated in favour of `Model.all`.
+
+    `Relation#all` still returns an array, but is deprecated (since it
+    would serve no purpose if we made it return a `Relation`).
+
+    *Jon Leighton*
+
+*   Deprecate `update_column` method in favor of `update_columns`.
+
+    *Rafael Mendonça França*
+
+*   Added an `update_columns` method. This new method updates the given attributes on an object,
+    without calling save, hence skipping validations and callbacks.
+    Example:
+
+        User.first.update_columns({:name => "sebastian", :age => 25})         # => true
+
+    *Sebastian Martinez + Rafael Mendonça França*
+
 *   Removed `:finder_sql` and `:counter_sql` collection association options. Please
     use scopes instead.
 
@@ -40,11 +71,11 @@
 *   `ActiveRecord::Relation#inspect` now makes it clear that you are
     dealing with a `Relation` object rather than an array:.
 
-       User.where(:age => 30).inspect
-       # => <ActiveRecord::Relation [#<User ...>, #<User ...>, ...]>
+        User.where(:age => 30).inspect
+        # => <ActiveRecord::Relation [#<User ...>, #<User ...>, ...]>
 
-       User.where(:age => 30).to_a.inspect
-       # => [#<User ...>, #<User ...>]
+        User.where(:age => 30).to_a.inspect
+        # => [#<User ...>, #<User ...>]
 
     The number of records displayed will be limited to 10.
 
@@ -53,17 +84,24 @@
 *   Add `collation` and `ctype` support to PostgreSQL. These are available for PostgreSQL 8.4 or later.
     Example:
 
-      development:
-        adapter: postgresql
-        host: localhost
-        database: rails_development
-        username: foo
-        password: bar
-        encoding: UTF8
-        collation: ja_JP.UTF8
-        ctype: ja_JP.UTF8
+        development:
+          adapter: postgresql
+          host: localhost
+          database: rails_development
+          username: foo
+          password: bar
+          encoding: UTF8
+          collation: ja_JP.UTF8
+          ctype: ja_JP.UTF8
 
     *kennyj*
+
+*   Changed validates_presence_of on an association so that children objects
+    do not validate as being present if they are marked for destruction. This
+    prevents you from saving the parent successfully and thus putting the parent
+    in an invalid state.
+
+    *Nick Monje & Brent Wheeldon*
 
 *   `FinderMethods#exists?` now returns `false` with the `false` argument.
 
@@ -172,7 +210,7 @@
 
 *   Add uuid datatype support to PostgreSQL adapter. *Konstantin Shabanov*
 
-*   `update_attribute` has been removed. Use `update_column` if
+*   `update_attribute` has been removed. Use `update_columns` if
     you want to bypass mass-assignment protection, validations, callbacks,
     and touching of updated_at. Otherwise please use `update_attributes`.
 
@@ -237,13 +275,12 @@
 
     Note that as an interim step, it is possible to rewrite the above as:
 
-        Post.scoped(:where => { :comments_count => 10 }, :limit => 5)
+        Post.all.merge(:where => { :comments_count => 10 }, :limit => 5)
 
     This could save you a lot of work if there is a lot of old-style
     finder usage in your application.
 
-    Calling `Post.scoped(options)` is a shortcut for
-    `Post.scoped.merge(options)`. `Relation#merge` now accepts a hash of
+    `Relation#merge` now accepts a hash of
     options, but they must be identical to the names of the equivalent
     finder method. These are mostly identical to the old-style finder
     option names, except in the following cases:

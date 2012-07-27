@@ -37,12 +37,12 @@ ActiveRecord::Schema.define do
 
   create_table :admin_users, :force => true do |t|
     t.string :name
-    t.text :settings, :null => true
+    t.string :settings, :null => true, :limit => 1024
     # MySQL does not allow default values for blobs. Fake it out with a
     # big varchar below.
-    t.string :preferences, :null => false, :default => '', :limit => 1024
+    t.string :preferences, :null => true, :default => '', :limit => 1024
     t.string :json_data, :null => true, :limit => 1024
-    t.string :json_data_empty, :null => false, :default => "", :limit => 1024
+    t.string :json_data_empty, :null => true, :default => "", :limit => 1024
     t.references :account
   end
 
@@ -178,7 +178,7 @@ ActiveRecord::Schema.define do
     t.integer :client_of
     t.integer :rating, :default => 1
     t.integer :account_id
-    t.string :description, :null => false, :default => ""
+    t.string :description, :default => ""
   end
 
   add_index :companies, [:firm_id, :type, :rating, :ruby_type], :name => "company_index"

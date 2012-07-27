@@ -131,36 +131,36 @@ class BasicsTest < ActiveRecord::TestCase
 
   unless current_adapter?(:PostgreSQLAdapter,:OracleAdapter,:SQLServerAdapter)
     def test_limit_with_comma
-      assert Topic.limit("1,2").all
+      assert Topic.limit("1,2").to_a
     end
   end
 
   def test_limit_without_comma
-    assert_equal 1, Topic.limit("1").all.length
-    assert_equal 1, Topic.limit(1).all.length
+    assert_equal 1, Topic.limit("1").to_a.length
+    assert_equal 1, Topic.limit(1).to_a.length
   end
 
   def test_invalid_limit
     assert_raises(ArgumentError) do
-      Topic.limit("asdfadf").all
+      Topic.limit("asdfadf").to_a
     end
   end
 
   def test_limit_should_sanitize_sql_injection_for_limit_without_comas
     assert_raises(ArgumentError) do
-      Topic.limit("1 select * from schema").all
+      Topic.limit("1 select * from schema").to_a
     end
   end
 
   def test_limit_should_sanitize_sql_injection_for_limit_with_comas
     assert_raises(ArgumentError) do
-      Topic.limit("1, 7 procedure help()").all
+      Topic.limit("1, 7 procedure help()").to_a
     end
   end
 
   unless current_adapter?(:MysqlAdapter) || current_adapter?(:Mysql2Adapter)
     def test_limit_should_allow_sql_literal
-      assert_equal 1, Topic.limit(Arel.sql('2-1')).all.length
+      assert_equal 1, Topic.limit(Arel.sql('2-1')).to_a.length
     end
   end
 
@@ -349,13 +349,13 @@ class BasicsTest < ActiveRecord::TestCase
   end
 
   def test_load
-    topics = Topic.scoped(:order => 'id').all
+    topics = Topic.all.merge!(:order => 'id').to_a
     assert_equal(4, topics.size)
     assert_equal(topics(:first).title, topics.first.title)
   end
 
   def test_load_with_condition
-    topics = Topic.scoped(:where => "author_name = 'Mary'").all
+    topics = Topic.all.merge!(:where => "author_name = 'Mary'").to_a
 
     assert_equal(1, topics.size)
     assert_equal(topics(:second).title, topics.first.title)
@@ -609,7 +609,7 @@ class BasicsTest < ActiveRecord::TestCase
     assert_equal 'value', weird.send('a$b')
     assert_equal 'value', weird.read_attribute('a$b')
 
-    weird.update_column('a$b', 'value2')
+    weird.update_columns('a$b' => 'value2')
     weird.reload
     assert_equal 'value2', weird.send('a$b')
     assert_equal 'value2', weird.read_attribute('a$b')
@@ -1218,10 +1218,10 @@ class BasicsTest < ActiveRecord::TestCase
   end
 
   def test_quoting_arrays
-    replies = Reply.scoped(:where => [ "id IN (?)", topics(:first).replies.collect(&:id) ]).all
+    replies = Reply.all.merge!(:where => [ "id IN (?)", topics(:first).replies.collect(&:id) ]).to_a
     assert_equal topics(:first).replies.size, replies.size
 
-    replies = Reply.scoped(:where => [ "id IN (?)", [] ]).all
+    replies = Reply.all.merge!(:where => [ "id IN (?)", [] ]).to_a
     assert_equal 0, replies.size
   end
 
@@ -1556,57 +1556,57 @@ class BasicsTest < ActiveRecord::TestCase
 
   def test_no_limit_offset
     assert_nothing_raised do
-      Developer.scoped(:offset => 2).all
+      Developer.all.merge!(:offset => 2).to_a
     end
   end
 
   def test_find_last
     last  = Developer.last
-    assert_equal last, Developer.scoped(:order => 'id desc').first
+    assert_equal last, Developer.all.merge!(:order => 'id desc').first
   end
 
   def test_last
-    assert_equal Developer.scoped(:order => 'id desc').first, Developer.last
+    assert_equal Developer.all.merge!(:order => 'id desc').first, Developer.last
   end
 
   def test_all
-    developers = Developer.all
+    developers = Developer.to_a
     assert_kind_of Array, developers
-    assert_equal Developer.all, developers
+    assert_equal Developer.to_a, developers
   end
 
   def test_all_with_conditions
-    assert_equal Developer.scoped(:order => 'id desc').all, Developer.order('id desc').all
+    assert_equal Developer.all.merge!(:order => 'id desc').to_a, Developer.order('id desc').to_a
   end
 
   def test_find_ordered_last
-    last  = Developer.scoped(:order => 'developers.salary ASC').last
-    assert_equal last, Developer.scoped(:order => 'developers.salary ASC').all.last
+    last  = Developer.all.merge!(:order => 'developers.salary ASC').last
+    assert_equal last, Developer.all.merge!(:order => 'developers.salary ASC').to_a.last
   end
 
   def test_find_reverse_ordered_last
-    last  = Developer.scoped(:order => 'developers.salary DESC').last
-    assert_equal last, Developer.scoped(:order => 'developers.salary DESC').all.last
+    last  = Developer.all.merge!(:order => 'developers.salary DESC').last
+    assert_equal last, Developer.all.merge!(:order => 'developers.salary DESC').to_a.last
   end
 
   def test_find_multiple_ordered_last
-    last  = Developer.scoped(:order => 'developers.name, developers.salary DESC').last
-    assert_equal last, Developer.scoped(:order => 'developers.name, developers.salary DESC').all.last
+    last  = Developer.all.merge!(:order => 'developers.name, developers.salary DESC').last
+    assert_equal last, Developer.all.merge!(:order => 'developers.name, developers.salary DESC').to_a.last
   end
 
   def test_find_keeps_multiple_order_values
-    combined = Developer.scoped(:order => 'developers.name, developers.salary').all
-    assert_equal combined, Developer.scoped(:order => ['developers.name', 'developers.salary']).all
+    combined = Developer.all.merge!(:order => 'developers.name, developers.salary').to_a
+    assert_equal combined, Developer.all.merge!(:order => ['developers.name', 'developers.salary']).to_a
   end
 
   def test_find_keeps_multiple_group_values
-    combined = Developer.scoped(:group => 'developers.name, developers.salary, developers.id, developers.created_at, developers.updated_at').all
-    assert_equal combined, Developer.scoped(:group => ['developers.name', 'developers.salary', 'developers.id', 'developers.created_at', 'developers.updated_at']).all
+    combined = Developer.all.merge!(:group => 'developers.name, developers.salary, developers.id, developers.created_at, developers.updated_at').to_a
+    assert_equal combined, Developer.all.merge!(:group => ['developers.name', 'developers.salary', 'developers.id', 'developers.created_at', 'developers.updated_at']).to_a
   end
 
   def test_find_symbol_ordered_last
-    last  = Developer.scoped(:order => :salary).last
-    assert_equal last, Developer.scoped(:order => :salary).all.last
+    last  = Developer.all.merge!(:order => :salary).last
+    assert_equal last, Developer.all.merge!(:order => :salary).to_a.last
   end
 
   def test_abstract_class
@@ -1617,18 +1617,6 @@ class BasicsTest < ActiveRecord::TestCase
 
   def test_abstract_class_table_name
     assert_nil AbstractCompany.table_name
-  end
-
-  def test_base_class
-    assert_equal LoosePerson,     LoosePerson.base_class
-    assert_equal LooseDescendant, LooseDescendant.base_class
-    assert_equal TightPerson,     TightPerson.base_class
-    assert_equal TightPerson,     TightDescendant.base_class
-
-    assert_equal Post, Post.base_class
-    assert_equal Post, SpecialPost.base_class
-    assert_equal Post, StiPost.base_class
-    assert_equal SubStiPost, SubStiPost.base_class
   end
 
   def test_descends_from_active_record
@@ -1706,8 +1694,8 @@ class BasicsTest < ActiveRecord::TestCase
   end
 
   def test_inspect_limited_select_instance
-    assert_equal %(#<Topic id: 1>), Topic.scoped(:select => 'id', :where => 'id = 1').first.inspect
-    assert_equal %(#<Topic id: 1, title: "The First Topic">), Topic.scoped(:select => 'id, title', :where => 'id = 1').first.inspect
+    assert_equal %(#<Topic id: 1>), Topic.all.merge!(:select => 'id', :where => 'id = 1').first.inspect
+    assert_equal %(#<Topic id: 1, title: "The First Topic">), Topic.all.merge!(:select => 'id, title', :where => 'id = 1').first.inspect
   end
 
   def test_inspect_class_without_table
@@ -1820,7 +1808,7 @@ class BasicsTest < ActiveRecord::TestCase
 
   def test_current_scope_is_reset
     Object.const_set :UnloadablePost, Class.new(ActiveRecord::Base)
-    UnloadablePost.send(:current_scope=, UnloadablePost.scoped)
+    UnloadablePost.send(:current_scope=, UnloadablePost.all)
 
     UnloadablePost.unloadable
     assert_not_nil Thread.current[:UnloadablePost_current_scope]
@@ -1896,13 +1884,13 @@ class BasicsTest < ActiveRecord::TestCase
 
   def test_cache_key_format_for_existing_record_with_nil_updated_at
     dev = Developer.first
-    dev.update_column(:updated_at, nil)
+    dev.update_columns(updated_at: nil)
     assert_match(/\/#{dev.id}$/, dev.cache_key)
   end
 
   def test_uniq_delegates_to_scoped
     scope = stub
-    Bird.stubs(:scoped).returns(mock(:uniq => scope))
+    Bird.stubs(:all).returns(mock(:uniq => scope))
     assert_equal scope, Bird.uniq
   end
 
@@ -1969,7 +1957,7 @@ class BasicsTest < ActiveRecord::TestCase
       scope.expects(meth).with(:foo, :bar).returns(record)
 
       klass = Class.new(ActiveRecord::Base)
-      klass.stubs(:scoped => scope)
+      klass.stubs(:all => scope)
 
       assert_equal record, klass.public_send(meth, :foo, :bar)
     end
@@ -1977,6 +1965,14 @@ class BasicsTest < ActiveRecord::TestCase
 
   test "scoped can take a values hash" do
     klass = Class.new(ActiveRecord::Base)
-    assert_equal ['foo'], klass.scoped(select: 'foo').select_values
+    assert_equal ['foo'], klass.all.merge!(select: 'foo').select_values
+  end
+
+  test "Model.to_a returns an array" do
+    assert_equal Post.all.to_a, Post.to_a
+  end
+
+  test "Model.all returns a relation" do
+    assert Post.all.is_a?(ActiveRecord::Relation)
   end
 end
